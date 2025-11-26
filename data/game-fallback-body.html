@@ -1,0 +1,373 @@
+<div id="__next">
+  <script>
+    !function () {
+      try {
+        var d = document.documentElement, n = "data-theme", s = "setAttribute";
+        var e = localStorage.getItem("theme");
+        if ("system" === e || (!e && true)) {
+          var t = "(prefers-color-scheme: dark)", m = window.matchMedia(t);
+          if (m.media !== t || m.matches) {
+            d[s](n, "dark");
+          } else {
+            d[s](n, "light");
+          }
+        } else if (e) {
+          d[s](n, e || "");
+        }
+      } catch (e) {
+      }
+    }();
+  </script>
+  <div class="LandingTemplate_container__s0m0a comingSoonWrapper">
+    <div class="Header_container__B7_rr comingSoonHeader">
+      <a href="/" class="comingSoonLogo">
+        <div class="Logo_logo__H5Fps">
+          <img alt="hahagames logo" fetchpriority="high" width="99" height="48" decoding="async" data-nimg="1" style="color: transparent" src="https://www.hahagames.com/images/svg/logo-light.svg">
+        </div>
+      </a>
+      <button type="button" class="Buttons_button__W2cCA Buttons_rounded__WNp8y comingSoonHomeBtn" data-go-home>
+        <p class="">返回首页</p>
+      </button>
+    </div>
+    <div class="LandingTemplate_mainContent__12PQq mainContent">
+      <main class="LandingTemplate_fullHeight__SqU5o">
+        <div class="Home_container__lkn3P">
+          <section class="RecommendedBanner_container__zVIRs comingSoonSection">
+            <div class="RecommendedBanner_textContentWrapper__aeEms comingSoonTextCol">
+              <div class="RecommendedBanner_textContent__ceH7d">
+                <p class="comingSoonBadge">开发中</p>
+                <h1 class="RecommendedBanner_title__5FlaE" id="coming-soon-title">敬请期待</h1>
+                <p class="RecommendedBanner_description__aPXXk" id="coming-soon-subtitle">抱歉，该页面正在开发中。</p>
+              </div>
+              <form class="comingSoonForm" id="coming-soon-form">
+                <label for="coming-soon-email">留下邮箱，开发完成后第一时间通知你</label>
+                <div class="comingSoonControls">
+                  <input type="email" id="coming-soon-email" name="email" placeholder="hello@example.com" autocomplete="email" required>
+                  <button type="submit" class="Buttons_button__W2cCA Buttons_rounded__WNp8y comingSoonButton">
+                    <p class="">保存邮箱</p>
+                  </button>
+                </div>
+                <p class="comingSoonStatus" id="coming-soon-status"></p>
+              </form>
+            </div>
+            <div class="comingSoonCard">
+              <div class="comingSoonCover" id="coming-soon-cover-wrapper">
+                <img id="coming-soon-cover" alt="当前游戏封面">
+                <div class="comingSoonCoverFallback" id="coming-soon-cover-fallback">🎮</div>
+              </div>
+              <div class="comingSoonMeta">
+                <p class="comingSoonLabel">正在访问的游戏</p>
+                <p class="comingSoonName" id="coming-soon-name">加载中…</p>
+                <p class="comingSoonSlug" id="coming-soon-slug"></p>
+              </div>
+              <button class="Buttons_button__W2cCA Buttons_rounded__WNp8y comingSoonBack" type="button" data-go-home>
+                <p class="">返回首页</p>
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <div id="popover-root"></div>
+  </div>
+</div>
+<script>
+  (function () {
+    const homeUrl = "/";
+    const params = new URLSearchParams(window.location.search);
+    const slugFromPath = window.location.pathname.split("/").filter(Boolean).pop() || "";
+    const slug = (params.get("slug") || slugFromPath || "unknown-game").trim();
+    const rawTitle = params.get("title") || "";
+    const cover = params.get("cover") || "";
+    const normalizedTitle = (rawTitle || slug.replace(/[-_]/g, " ")).replace(/\s+/g, " ").trim();
+
+    const titleEl = document.getElementById("coming-soon-title");
+    const subtitleEl = document.getElementById("coming-soon-subtitle");
+    const nameEl = document.getElementById("coming-soon-name");
+    const slugEl = document.getElementById("coming-soon-slug");
+    const coverEl = document.getElementById("coming-soon-cover");
+    const coverWrapper = document.getElementById("coming-soon-cover-wrapper");
+    const coverFallback = document.getElementById("coming-soon-cover-fallback");
+    const statusEl = document.getElementById("coming-soon-status");
+    const emailInput = document.getElementById("coming-soon-email");
+    const form = document.getElementById("coming-soon-form");
+
+    const titleToShow = normalizedTitle || "即将上线的游戏";
+    titleEl.textContent = titleToShow;
+    nameEl.textContent = titleToShow;
+    slugEl.textContent = slug ? "slug: " + slug : "";
+    subtitleEl.textContent = `抱歉，“${titleToShow}” 页面正在开发中。留下邮箱，准备就绪后会第一时间通知你。`;
+
+    function persistWaitlist(email) {
+      try {
+        const key = "hahagames_waitlist";
+        const payload = JSON.parse(localStorage.getItem(key) || "[]");
+        payload.push({
+          email,
+          slug,
+          title: titleToShow,
+          savedAt: new Date().toISOString(),
+        });
+        const trimmed = payload.slice(-20);
+        localStorage.setItem(key, JSON.stringify(trimmed));
+      } catch (_) {
+      }
+    }
+
+    if (cover && coverEl) {
+      coverEl.src = cover;
+      coverEl.alt = `image game ${titleToShow}`;
+      coverEl.style.display = "block";
+      if (coverFallback) coverFallback.style.display = "none";
+    } else if (coverWrapper && coverFallback) {
+      coverEl.style.display = "none";
+      coverFallback.style.display = "flex";
+    }
+
+    function setStatus(message, variant) {
+      if (!statusEl) return;
+      statusEl.textContent = message || "";
+      statusEl.dataset.variant = variant || "";
+    }
+
+    form?.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const email = (emailInput?.value || "").trim();
+      const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      if (!emailPattern.test(email)) {
+        setStatus("请输入有效的邮箱地址", "error");
+        return;
+      }
+
+      persistWaitlist(email);
+      setStatus("邮箱已保存，正在为你跳转回首页…", "success");
+      setTimeout(() => {
+        window.location.href = homeUrl;
+      }, 700);
+    });
+
+    document.querySelectorAll("[data-go-home]").forEach(function (el) {
+      el.addEventListener("click", function () {
+        window.location.href = homeUrl;
+      });
+    });
+  })();
+</script>
+<style>
+  :root {
+    --coming-bg: #0b1120;
+    --coming-card: rgba(255, 255, 255, 0.06);
+    --coming-card-border: rgba(255, 255, 255, 0.12);
+    --coming-text: #f8fafc;
+    --coming-subtext: rgba(248, 250, 252, 0.8);
+    --coming-accent: #f59e0b;
+    --coming-radius: 18px;
+  }
+
+  [data-theme="light"] :root {
+    --coming-bg: #f8fafc;
+    --coming-card: rgba(12, 18, 40, 0.04);
+    --coming-card-border: rgba(12, 18, 40, 0.12);
+    --coming-text: #0b1120;
+    --coming-subtext: rgba(12, 18, 40, 0.8);
+    --coming-accent: #f59e0b;
+  }
+
+  .comingSoonWrapper {
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+    background: radial-gradient(120% 120% at 20% 20%, rgba(245, 158, 11, 0.08), transparent),
+      radial-gradient(120% 120% at 80% 0%, rgba(59, 130, 246, 0.06), transparent),
+      var(--coming-bg);
+    color: var(--coming-text);
+  }
+
+  .comingSoonHeader {
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .comingSoonHomeBtn p,
+  .comingSoonBack p {
+    margin: 0;
+  }
+
+  .comingSoonSection {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.9fr);
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .comingSoonBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #f97316, #f59e0b);
+    color: #0b1120;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .comingSoonTextCol {
+    gap: 16px;
+  }
+
+  .comingSoonForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--coming-card);
+    border: 1px solid var(--coming-card-border);
+    border-radius: var(--coming-radius);
+    padding: 16px;
+  }
+
+  .comingSoonForm label {
+    font-weight: 600;
+    color: var(--coming-text);
+  }
+
+  .comingSoonControls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .comingSoonControls input {
+    flex: 1;
+    min-width: 240px;
+    border-radius: 14px;
+    border: 1px solid var(--coming-card-border);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 14px 16px;
+    font-size: 16px;
+    color: var(--coming-text);
+    outline: none;
+  }
+
+  [data-theme="light"] .comingSoonControls input {
+    background: rgba(12, 18, 40, 0.03);
+  }
+
+  .comingSoonControls input:focus {
+    border-color: var(--coming-accent);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  }
+
+  .comingSoonButton {
+    white-space: nowrap;
+  }
+
+  .comingSoonStatus {
+    min-height: 20px;
+    margin: 0;
+    color: var(--coming-subtext);
+    font-size: 14px;
+  }
+
+  .comingSoonStatus[data-variant="error"] {
+    color: #ef4444;
+  }
+
+  .comingSoonStatus[data-variant="success"] {
+    color: #10b981;
+  }
+
+  .comingSoonCard {
+    background: var(--coming-card);
+    border: 1px solid var(--coming-card-border);
+    border-radius: var(--coming-radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .comingSoonCover {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .comingSoonCover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .comingSoonCoverFallback {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: var(--coming-text);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.2));
+  }
+
+  .comingSoonMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .comingSoonLabel {
+    margin: 0;
+    color: var(--coming-subtext);
+    font-weight: 600;
+  }
+
+  .comingSoonName {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--coming-text);
+  }
+
+  .comingSoonSlug {
+    margin: 0;
+    color: var(--coming-subtext);
+  }
+
+  .comingSoonBack {
+    align-self: flex-start;
+  }
+
+  @media (max-width: 980px) {
+    .comingSoonSection {
+      grid-template-columns: 1fr;
+    }
+
+    .comingSoonCard {
+      order: -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .comingSoonWrapper {
+      padding: 16px 12px 32px;
+    }
+
+    .comingSoonControls {
+      flex-direction: column;
+    }
+
+    .comingSoonBack {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>

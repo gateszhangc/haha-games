@@ -33,6 +33,12 @@ const PAGE_SOURCES: Record<string, PageSource> = {
   },
 };
 
+const FALLBACK_GAME_PAGE: PageSource = {
+  headPath: PAGE_SOURCES["/"].headPath,
+  bodyPath: "data/game-fallback-body.html",
+  metaPath: PAGE_SOURCES["/"].metaPath,
+};
+
 function readTextFile(relativePath: string): string {
   const fullPath = path.join(process.cwd(), relativePath);
   if (!fs.existsSync(fullPath)) {
@@ -88,7 +94,15 @@ function normalizePathname(pathname: string | null | undefined): string {
 
 function resolvePageSource(pathname: string): PageSource {
   const normalized = normalizePathname(pathname);
-  return PAGE_SOURCES[normalized] ?? PAGE_SOURCES["/"];
+  if (PAGE_SOURCES[normalized]) {
+    return PAGE_SOURCES[normalized];
+  }
+
+  if (normalized.startsWith("/game/")) {
+    return FALLBACK_GAME_PAGE;
+  }
+
+  return PAGE_SOURCES["/"];
 }
 
 async function getRequestPathname(): Promise<string> {
