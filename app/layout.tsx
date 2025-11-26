@@ -1,16 +1,37 @@
 import fs from "fs";
 import path from "path";
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import "./globals.css";
 
 type AttrMap = Record<string, string>;
 
+type PageSource = {
+  headPath: string;
+  bodyPath: string;
+  metaPath: string;
+  fallbackBody?: string;
+};
+
 const fallbackBodyMarkup = `
 <main style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 2rem; line-height: 1.6;">
   <h1 style="font-size: 1.5rem; margin: 0 0 0.5rem;">HaHaGames clone placeholder</h1>
-  <p style="margin: 0;">Run <code>npm run fetch</code> and <code>npm run snapshot</code> to pull the live markup into <code>data/</code>.</p>
+  <p style="margin: 0;">Run <code>npm run fetch</code> (with the appropriate <code>--url</code>/<code>--prefix</code>) and <code>npm run snapshot</code> to pull the live markup into <code>data/</code>.</p>
 </main>
 `;
+
+const PAGE_SOURCES: Record<string, PageSource> = {
+  "/": {
+    headPath: "data/home-head.html",
+    bodyPath: "data/home-body.html",
+    metaPath: "data/home-meta.json",
+  },
+  "/game/a-shedletsky-pov": {
+    headPath: "data/a-shedletsky-pov-head.html",
+    bodyPath: "data/a-shedletsky-pov-body.html",
+    metaPath: "data/a-shedletsky-pov-meta.json",
+  },
+};
 
 function readTextFile(relativePath: string): string {
   const fullPath = path.join(process.cwd(), relativePath);
@@ -38,14 +59,14 @@ function normalizeAttributes(value: unknown): AttrMap {
   );
 }
 
-function readAttributeMeta(): { htmlAttributes: AttrMap; bodyAttributes: AttrMap } {
-  const metaPath = path.join(process.cwd(), "data", "markup-meta.json");
-  if (!fs.existsSync(metaPath)) {
+function readAttributeMeta(metaPath: string): { htmlAttributes: AttrMap; bodyAttributes: AttrMap } {
+  const fullPath = path.join(process.cwd(), metaPath);
+  if (!fs.existsSync(fullPath)) {
     return { htmlAttributes: {}, bodyAttributes: {} };
   }
 
   try {
-    const parsed = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+    const parsed = JSON.parse(fs.readFileSync(fullPath, "utf8"));
     return {
       htmlAttributes: normalizeAttributes(parsed.htmlAttributes),
       bodyAttributes: normalizeAttributes(parsed.bodyAttributes),
@@ -59,15 +80,40 @@ function mergeAttributes(defaults: AttrMap, attrs: AttrMap): AttrMap {
   return { ...defaults, ...attrs };
 }
 
-export default function RootLayout({
+function normalizePathname(pathname: string | null | undefined): string {
+  if (!pathname) return "/";
+  if (pathname === "/") return "/";
+  return pathname.endsWith("/") ? pathname.slice(0, -1) || "/" : pathname;
+}
+
+function resolvePageSource(pathname: string): PageSource {
+  const normalized = normalizePathname(pathname);
+  return PAGE_SOURCES[normalized] ?? PAGE_SOURCES["/"];
+}
+
+async function getRequestPathname(): Promise<string> {
+  const headerList = await headers();
+  return (
+    headerList.get("x-pathname") ||
+    headerList.get("x-matched-path") ||
+    headerList.get("x-invoke-path") ||
+    "/"
+  );
+}
+
+export default async function RootLayout({
   children: _children,
 }: Readonly<{ children: ReactNode }>) {
-  const headMarkup = readTextFile("data/home-head.html");
-  const bodyMarkup = readTextFile("data/home-body.html");
-  const { htmlAttributes, bodyAttributes } = readAttributeMeta();
+  const pathname = await getRequestPathname();
+  const source = resolvePageSource(pathname);
+
+  const headMarkup = readTextFile(source.headPath);
+  const bodyMarkup = readTextFile(source.bodyPath);
+  const { htmlAttributes, bodyAttributes } = readAttributeMeta(source.metaPath);
 
   const htmlProps = mergeAttributes({ lang: "en" }, htmlAttributes);
   const bodyProps = mergeAttributes({}, bodyAttributes);
+  const resolvedBody = bodyMarkup || source.fallbackBody || fallbackBodyMarkup;
 
   return (
     <html {...htmlProps} suppressHydrationWarning>
@@ -75,9 +121,7 @@ export default function RootLayout({
       <body
         {...bodyProps}
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{
-          __html: bodyMarkup || fallbackBodyMarkup,
-        }}
+        dangerouslySetInnerHTML={{ __html: resolvedBody }}
       />
     </html>
   );
