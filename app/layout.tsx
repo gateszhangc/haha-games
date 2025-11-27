@@ -103,11 +103,7 @@ function resolvePageSource(pathname: string): PageSource {
     return PAGE_SOURCES[normalized];
   }
 
-  if (normalized.startsWith("/game/")) {
-    return FALLBACK_GAME_PAGE;
-  }
-
-  return PAGE_SOURCES["/"];
+  return FALLBACK_GAME_PAGE;
 }
 
 async function getRequestPathname(): Promise<string> {
