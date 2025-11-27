@@ -1,0 +1,8 @@
+{
+  "name": "HahaGames",
+  "short_name": "HahaGames",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed"
+}

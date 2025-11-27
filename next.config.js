@@ -13,6 +13,15 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      // 重写 /images/svg/* 到 /assets/images/svg/*
+      {
+        source: '/images/svg/:path*',
+        destination: '/assets/images/svg/:path*',
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
