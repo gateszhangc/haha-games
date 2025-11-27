@@ -26,6 +26,11 @@ const PAGE_SOURCES: Record<string, PageSource> = {
     bodyPath: "data/home-body.html",
     metaPath: "data/home-meta.json",
   },
+  "/coming-soon": {
+    headPath: "data/home-head.html",
+    bodyPath: "data/game-fallback-body.html",
+    metaPath: "data/home-meta.json",
+  },
   "/game/a-shedletsky-pov": {
     headPath: "data/a-shedletsky-pov-head.html",
     bodyPath: "data/a-shedletsky-pov-body.html",
